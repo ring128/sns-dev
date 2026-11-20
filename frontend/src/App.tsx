@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type SubmitEvent } from 'react'
 import './App.css'
 
 type Topic = {
   id: number
   title: string
-  body: string
 }
 
 function renderTopic(topic: Topic) {
   return (
     <li key={topic.id}>
       <h2>{topic.title}</h2>
-      <p>{topic.body}</p>
     </li>
   )
 } // Render one topic
@@ -19,6 +17,7 @@ function renderTopic(topic: Topic) {
 function App() {
   const [topics, setTopics] = useState<Topic[]>([])
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -35,16 +34,59 @@ function App() {
       }
     } // Load topics from the API
 
-    loadTopics()
+    void loadTopics()
 
     return () => {
       ignore = true
     } // Ignore a response after this effect ends
   }, []) // Load topics when the page opens
 
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const title = String(formData.get('title') ?? '').trim()
+
+    if (!title) {
+      setError('題名を入力してください')
+      return
+    }
+
+    setSubmitting(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/topics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      })
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+
+      const createdTopic = (await response.json()) as Topic
+      setTopics((currentTopics) => [...currentTopics, createdTopic])
+      form.reset()
+    } catch {
+      setError('議題を投稿できませんでした')
+    } finally {
+      setSubmitting(false)
+    }
+  } // Submit a new topic
+
   return (
     <main>
       <h1>議題一覧</h1>
+
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="topic-title">題名</label>
+        <input id="topic-title" name="title" required />
+
+        <button type="submit" disabled={submitting}>
+          {submitting ? '投稿中…' : '投稿'}
+        </button>
+      </form>
+
       {error && <p role="alert">{error}</p>}
       <ul>{topics.map(renderTopic)}</ul>
     </main>
