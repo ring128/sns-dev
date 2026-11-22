@@ -13,10 +13,6 @@
 
 認証にはBetter Authを採用予定です。
 
-## 簡易公開（beta）
-
-公開後のURLは`https://ring128.github.io/sns-dev/`です。
-
 ## 現在の進捗
 
 - [x] React・TypeScript・Viteで画面を起動
@@ -26,9 +22,6 @@
 - [x] 議題の一覧取得APIと投稿APIを実装
 - [x] 画面から一文の議題を投稿し、一覧に表示
 - [x] 再読み込み後も投稿が残ることを確認
-- [ ] GitHub Pagesで改めて実装を確認する
-- [x] GitHub Pages向けのビルドとbeta専用DBの設定を準備する
-- [ ] Renderに投稿API・beta用DBを作成し、GitHub Pagesに接続する
 - [ ] 要件定義を再度固める
 - [ ] 一文の議題に合わせたDBマイグレーションの適用を確認する
 - [ ] 要件と現在の実装の差を確認する
