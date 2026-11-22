@@ -1,6 +1,10 @@
 import { useEffect, useState, type SubmitEvent } from 'react'
 import './App.css'
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
+const apiAvailable = import.meta.env.DEV || Boolean(apiBaseUrl)
+const topicsApiUrl = `${apiBaseUrl}/api/topics`
+
 type Topic = {
   id: number
   title: string
@@ -16,15 +20,17 @@ function renderTopic(topic: Topic) {
 
 function App() {
   const [topics, setTopics] = useState<Topic[]>([])
-  const [error, setError] = useState('')
+  const [error, setError] = useState(apiAvailable ? '' : '投稿APIの公開先が未設定です')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
+    if (!apiAvailable) return
+
     let ignore = false
 
     async function loadTopics() {
       try {
-        const response = await fetch('/api/topics')
+        const response = await fetch(topicsApiUrl)
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
         const data = (await response.json()) as Topic[]
@@ -43,6 +49,7 @@ function App() {
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!apiAvailable) return
 
     const form = event.currentTarget
     const formData = new FormData(form)
@@ -57,7 +64,7 @@ function App() {
     setError('')
 
     try {
-      const response = await fetch('/api/topics', {
+      const response = await fetch(topicsApiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title }),
@@ -82,7 +89,7 @@ function App() {
         <label htmlFor="topic-title">題名</label>
         <input id="topic-title" name="title" required />
 
-        <button type="submit" disabled={submitting}>
+        <button type="submit" disabled={submitting || !apiAvailable}>
           {submitting ? '投稿中…' : '投稿'}
         </button>
       </form>

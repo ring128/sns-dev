@@ -2,6 +2,18 @@ import Fastify from 'fastify'
 import { prisma } from './lib/prisma.js'
 
 const app = Fastify({ logger: true })
+const publicOrigin = process.env.PUBLIC_ORIGIN
+
+app.addHook('onRequest', async (request, reply) => {
+  if (publicOrigin && request.headers.origin === publicOrigin) {
+    reply.header('Access-Control-Allow-Origin', publicOrigin)
+    reply.header('Vary', 'Origin')
+    reply.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    reply.header('Access-Control-Allow-Headers', 'Content-Type')
+  }
+})
+
+app.options('/api/topics', async (_request, reply) => reply.code(204).send())
 
 app.get('/api/health', async () => {
   return { status: 'ok' }
@@ -32,7 +44,10 @@ app.post<{ Body: { title: string } }>(
   }, // Save the topic and return it
 ) // Register the topic creation endpoint
 
-app.listen({ port: 3000, host: '127.0.0.1' }).catch((error) => {
+app.listen({
+  port: Number(process.env.PORT ?? 3000),
+  host: process.env.HOST ?? '127.0.0.1',
+}).catch((error) => {
   app.log.error(error)
   process.exit(1)
 }) // Start the server; log the error and exit if startup fails
